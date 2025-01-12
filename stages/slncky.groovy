@@ -10,14 +10,14 @@ slncky_dir = "slncky_out"
 prepare_annotations_bed = {
 	output.dir = slncky_dir
 	if (liftover == "" && noncoding == "") {
-        produce("Ref_genome.protein_coding.bed","Rel_ref_genome.protein_coding.bed") {
+        produce(org_name+".protein_coding.bed",rel_sp_name+".protein_coding.bed") {
             exec """
             $python3 $ensembl_gtf2bed $annotation $output1.prefix.prefix ;
             $python3 $ensembl_gtf2bed $annotation_related_species $output2.prefix.prefix
             """
         }
     } else {
-        produce("Ref_genome.protein_coding.bed", "Rel_ref_genome.protein_coding.bed") {
+        produce(org_name+".protein_coding.bed",rel_sp_name+".protein_coding.bed") {
             exec """
             $gffread $annotation --bed -o ${output.dir}/temp.bed ;
             cut -f1-12 ${output.dir}/temp.bed > $output1 && rm ${output.dir}/temp.bed ;
@@ -56,7 +56,7 @@ prepare_Liftover = {
 annotation_config = {
     output.dir = slncky_dir
     if (liftover != "" && noncoding != "") { 
-        from("Ref_genome.protein_coding.bed", "Rel_ref_genome.protein_coding.bed") produce("annotation.config") {
+        from(org_name+".protein_coding.bed",rel_sp_name+".protein_coding.bed") produce("annotation.config") {
             exec """
             echo '>'$org_name >> $output ;
             echo 'CODING='$input1 >> $output ;
@@ -79,21 +79,21 @@ annotation_config = {
         from(org_name + "to" + rel_sp_name + ".over.chain.gz") produce("annotation.config") {
             exec """
             echo '>'$org_name >> $output ;
-            echo 'CODING='${output.dir}'/Ref_genome.protein_coding.bed' >> $output ;
+            echo 'CODING='${output.dir}'/'${org_name}'.protein_coding.bed' >> $output ;
             echo 'GENOME_FA='$genome >> $output ;
             echo 'ORTHOLOG='$rel_sp_name >> $output ;
             echo 'LIFTOVER='$input >> $output ;
-            echo 'NONCODING='${output.dir}'/Ref_genome.noncoding.bed' >> $output ;
-            echo 'MIRNA='${output.dir}'/Ref_genome.miRNA.bed' >> $output ;
-            echo 'SNORNA='${output.dir}'/Ref_genome.snoRNA.bed' >> $output ;
+            echo 'NONCODING='${output.dir}'/'${org_name}'.noncoding.bed' >> $output ;
+            echo 'MIRNA='${output.dir}'/'${org_name}'.miRNA.bed' >> $output ;
+            echo 'SNORNA='${output.dir}'/'${org_name}'.snoRNA.bed' >> $output ;
             echo '>'$rel_sp_name >> $output ;
-            echo 'CODING='${output.dir}'/Rel_ref_genome.protein_coding.bed' >> $output ;
+            echo 'CODING='${output.dir}'/'${rel_sp_name}'.protein_coding.bed' >> $output ;
             echo 'GENOME_FA='$genome_related_species >> $output ;
             echo 'ORTHOLOG='$org_name >> $output ;
-            echo 'NONCODING='${output.dir}'/Rel_ref_genome.noncoding.bed' >> $output ;
-            echo 'MIRNA='${output.dir}'/Rel_ref_genome.miRNA.bed' >> $output ;
-            echo 'SNORNA='${output.dir}'/Rel_ref_genome.snoRNA.bed' >> $output
-            """
+            echo 'NONCODING='${output.dir}'/'${rel_sp_name}'.noncoding.bed' >> $output ;
+            echo 'MIRNA='${output.dir}'/'${rel_sp_name}'.miRNA.bed' >> $output ;
+            echo 'SNORNA='${output.dir}'/'${rel_sp_name}'.snoRNA.bed' >> $output
+	    """
         }
     }
 }
@@ -123,7 +123,7 @@ ortholog_search = {
     from("annotation.config", "Putative-lnc-nptcs.bed") produce(rel_sp_name + ".orthologs.top.txt") {
         exec """
         source ${Activate} slncky ;
-        $python2 $slncky -n $threads -c $input1 $slncky_ortho_options $input2  $org_name $output.prefix.prefix.prefix
+        $python2 $slncky -n $threads -c $input1 $input2 $slncky_ortho_options $org_name $output.prefix.prefix.prefix
         """
     }
 }
